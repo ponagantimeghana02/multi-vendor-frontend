@@ -4,7 +4,7 @@ import { logout, updateUser } from "../features/auth/authSlice";
 import { useEffect } from "react";
 
 function Navbar() {
-  const { userDetails } = useSelector((state) => state.auth);
+  const { userDetails } = useSelector((state:any) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   console.log(userDetails);

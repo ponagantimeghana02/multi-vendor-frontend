@@ -8,15 +8,15 @@ import { useUpdateCartMutation } from "../../services/order";
 export default function BuyerProducts() {
   const navigate = useNavigate();
 
-  const {userDetails}=useSelector(state=>state.auth)
-  const {cartItems}=useSelector(state=>state.cart)
+  const {userDetails}=useSelector((state: any)=>state.auth)
+  const {cartItems}=useSelector((state: any)=>state.cart)
   const dispatch = useDispatch();
-  const { isLoading, data } = useGetProductsQuery();
+  const { isLoading, data } = useGetProductsQuery("");
  const [updateFn]= useUpdateCartMutation()
 
  
 
-  function addToCartFn(product) {
+  function addToCartFn(product: any) {
   
     if(userDetails?.token){
       dispatch(addToCart(product));

@@ -9,8 +9,8 @@ export default function Cart() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [createOrderFn] = useCreateOrderMutation();
-  const { cartItems } = useSelector((state) => state.cart);
-  const { userDetails } = useSelector((state) => state.auth);
+  const { cartItems } = useSelector((state: any) => state.cart);
+  const { userDetails } = useSelector((state: any) => state.auth);
 
   const [address, setAddress] = useState({
     fullName: "",
@@ -21,14 +21,14 @@ export default function Cart() {
   });
 
   const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc: any, item: any) => acc + item.price * item.quantity,
     0,
   );
 
   const deliveryCharge = subtotal > 0 ? 50 : 0;
   const total = subtotal + deliveryCharge;
 
-  async function handlePlaceOrder(address) {
+  async function handlePlaceOrder(address: any) {
     try {
       await createOrderFn({
         userId: userDetails.id,
