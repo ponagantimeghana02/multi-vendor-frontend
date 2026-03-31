@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import {
   useDeleteProductMutation,
   useGetvendorProductsQuery,
