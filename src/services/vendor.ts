@@ -24,7 +24,7 @@ type Product = {
 export const vendorApi = createApi({
   reducerPath: "vendorApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:8000/api",
+    baseUrl: "https://multi-vendor-backend-373h.onrender.com/api",
   }),
 
   endpoints: (builder) => ({

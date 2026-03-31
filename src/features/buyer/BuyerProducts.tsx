@@ -113,7 +113,7 @@ export default function BuyerProducts() {
                   <h6 className="fw-bold mb-2">{product.name}</h6>
 
                   <p
-                    className="text-muted small flex-grow-1" // ✅ FIXED
+                    className="text-muted small grow" // ✅ FIXED
                     style={{ minHeight: "40px" }}
                   >
                     {product.description}
