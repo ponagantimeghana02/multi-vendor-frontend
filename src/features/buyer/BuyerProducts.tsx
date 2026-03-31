@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { addToCart } from "../cart/cartSlice";
 import { useUpdateCartMutation } from "../../services/order";
 
-// ✅ Types
+// ✅ TYPES
 type Vendor = {
   _id: string;
   name: string;
@@ -20,6 +20,10 @@ type Product = {
   vendor: Vendor;
 };
 
+type CartItem = Product & {
+  quantity: number;
+};
+
 type UserDetails = {
   id: string;
   token: string;
@@ -30,7 +34,7 @@ type RootState = {
     userDetails: UserDetails;
   };
   cart: {
-    cartItems: Product[];
+    cartItems: CartItem[]; // ✅ FIXED
   };
 };
 
@@ -42,14 +46,19 @@ export default function BuyerProducts() {
 
   const dispatch = useDispatch();
 
-  // ❌ REMOVE "" → it expects void
   const { isLoading, data } = useGetProductsQuery();
 
   const [updateFn] = useUpdateCartMutation();
 
   function addToCartFn(product: Product) {
     if (userDetails?.token) {
-      dispatch(addToCart(product));
+      // ✅ FIX: Convert Product → CartItem
+      const cartItem: CartItem = {
+        ...product,
+        quantity: 1,
+      };
+
+      dispatch(addToCart(cartItem));
 
       updateFn({
         cartItems,
@@ -57,8 +66,7 @@ export default function BuyerProducts() {
         userId: userDetails.id,
       });
 
-      // ❌ FIX: localStorage only accepts string
-      localStorage.setItem("cartitems", JSON.stringify(cartItems));
+      localStorage.setItem("cartItems", JSON.stringify(cartItems));
 
       toast.success("Added to cart");
     } else {
@@ -74,7 +82,7 @@ export default function BuyerProducts() {
 
       {!isLoading && (
         <div className="row g-4">
-          {data?.map((product: Product) => (
+          {data?.map((product) => ( // ✅ let TS infer
             <div className="col-md-4 col-lg-3" key={product._id}>
               <div
                 className="card h-100 shadow-sm border-0"
@@ -105,7 +113,7 @@ export default function BuyerProducts() {
                   <h6 className="fw-bold mb-2">{product.name}</h6>
 
                   <p
-                    className="text-muted small grow"
+                    className="text-muted small flex-grow-1" // ✅ FIXED
                     style={{ minHeight: "40px" }}
                   >
                     {product.description}
