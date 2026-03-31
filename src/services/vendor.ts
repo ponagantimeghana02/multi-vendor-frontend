@@ -1,43 +1,77 @@
-// Need to use the React-specific entry point to import createApi
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// Define a service using a base URL and expected endpoints
+type Store = {
+  _id: string;
+  name: string;
+  description?: string;
+  vendor: Vendor;
+};
+
+type Vendor = {
+  _id: string;
+  name: string;
+};
+
+type Product = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  vendor: Vendor;
+};
+
 export const vendorApi = createApi({
   reducerPath: "vendorApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:8000/api",
   }),
-  endpoints: (builder: any) => ({
-    addStore: builder.mutation({
-      query: ({ store, token }) => ({
-        url: `/stores`,
-        method: "POST",
-        headers: {
-          "x-auth-token": token,
-        },
-        body: store,
-      }),
-    }),
 
-    getStores: builder.query({
+  endpoints: (builder) => ({
+    // ✅ ADD STORE
+    addStore: builder.mutation<Store, { store: Partial<Store>; token: string }>(
+      {
+        query: ({ store, token }) => ({
+          url: `/stores`,
+          method: "POST",
+          headers: {
+            "x-auth-token": token,
+          },
+          body: store,
+        }),
+      },
+    ),
+
+    // ✅ GET STORES
+    getStores: builder.query<Store[], void>({
       query: () => "/stores",
     }),
 
-    getStoreById:builder.query({
-      query:(id)=>`/stores/${id}`,
+    // ✅ GET STORE BY ID
+    getStoreById: builder.query<Store, string>({
+      query: (id) => `/stores/${id}`,
     }),
-    getProductById:builder.query({
-      query:(id)=>`/products/${id}`
-    })
-,
-getProducts:builder.query({
-  query:()=>"/products"
-}),
-    getvendorProducts: builder.query({
+
+    // ✅ GET PRODUCT BY ID
+    getProductById: builder.query<Product, string>({
+      query: (id) => `/products/${id}`,
+    }),
+
+    // ✅ GET ALL PRODUCTS
+    getProducts: builder.query<Product[], void>({
+      query: () => "/products",
+    }),
+
+    // ✅ GET VENDOR PRODUCTS
+    getvendorProducts: builder.query<Product[], string>({
       query: (vendorId) => `/products/vendorProducts/${vendorId}`,
     }),
 
-    addProduct: builder.mutation({
+    // ✅ ADD PRODUCT
+    addProduct: builder.mutation<
+      Product,
+      { product: Partial<Product>; token: string }
+    >({
       query: ({ product, token }) => ({
         url: `/products`,
         method: "POST",
@@ -48,34 +82,37 @@ getProducts:builder.query({
       }),
     }),
 
-    deleteProduct: builder.mutation({
+    // ✅ DELETE PRODUCT
+    deleteProduct: builder.mutation<
+      { success: boolean },
+      { token: string; productId: string }
+    >({
       query: ({ token, productId }) => ({
         url: `/products/${productId}`,
-        method: "delete",
+        method: "DELETE",
         headers: {
           "x-auth-token": token,
         },
       }),
     }),
 
-    updateProduct: builder.mutation({
-      query: ({ product,token, productId }) => ({
+    // ✅ UPDATE PRODUCT
+    updateProduct: builder.mutation<
+      Product,
+      { product: Partial<Product>; token: string; productId: string }
+    >({
+      query: ({ product, token, productId }) => ({
         url: `/products/${productId}`,
-        method: "put",
+        method: "PUT",
         headers: {
           "x-auth-token": token,
         },
-        body:product
+        body: product,
       }),
     }),
-
-
   }),
 });
 
-
-// Export hooks for usage in functional components, which are
-// auto-generated based on the defined endpoints
 export const {
   useAddStoreMutation,
   useAddProductMutation,
@@ -88,5 +125,5 @@ export const {
   useGetStoreByIdQuery,
   useGetProductsQuery,
   useUpdateProductMutation,
-  useGetProductByIdQuery
+  useGetProductByIdQuery,
 } = vendorApi;

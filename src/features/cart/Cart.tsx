@@ -5,14 +5,49 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { useCreateOrderMutation } from "../../services/order";
 
+// ✅ TYPES
+type CartItem = {
+  _id: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+};
+
+type UserDetails = {
+  id: string;
+  token: string;
+};
+
+type RootState = {
+  cart: {
+    cartItems: CartItem[];
+  };
+  auth: {
+    userDetails: UserDetails;
+  };
+};
+
+type Address = {
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  pincode: string;
+};
+
 export default function Cart() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [createOrderFn] = useCreateOrderMutation();
-  const { cartItems } = useSelector((state: any) => state.cart);
-  const { userDetails } = useSelector((state: any) => state.auth);
 
-  const [address, setAddress] = useState({
+  const { cartItems } = useSelector((state: RootState) => state.cart);
+  const { userDetails } = useSelector((state: RootState) => state.auth);
+
+  // ✅ FIX: separate state for form visibility
+  const [showAddressForm, setShowAddressForm] = useState<boolean>(false);
+
+  const [address, setAddress] = useState<Address>({
     fullName: "",
     phone: "",
     street: "",
@@ -20,23 +55,23 @@ export default function Cart() {
     pincode: "",
   });
 
+  // ✅ FIX: proper typing
   const subtotal = cartItems.reduce(
-    (acc: any, item: any) => acc + item.price * item.quantity,
-    0,
+    (acc: number, item: CartItem) => acc + item.price * item.quantity,
+    0
   );
 
   const deliveryCharge = subtotal > 0 ? 50 : 0;
   const total = subtotal + deliveryCharge;
 
-  async function handlePlaceOrder(address: any) {
+  async function handlePlaceOrder() {
     try {
       await createOrderFn({
         userId: userDetails.id,
         address: address,
-      });
+      }).unwrap(); // ✅ better error handling
 
       toast.success("Order placed successfully");
-
     } catch (error) {
       toast.error("Failed to place order");
     }
@@ -58,16 +93,15 @@ export default function Cart() {
         </div>
       ) : (
         <div className="row">
-          {/* LEFT SIDE - CART ITEMS */}
+          {/* LEFT SIDE */}
           <div className="col-lg-8">
-            {cartItems.map((item) => (
+            {cartItems.map((item: CartItem) => (
               <div
                 key={item._id}
                 className="card mb-3 shadow-sm border-0"
                 style={{ borderRadius: "12px" }}
               >
                 <div className="card-body d-flex align-items-center">
-                  {/* Image */}
                   <img
                     src={item.image}
                     alt={item.name}
@@ -76,12 +110,10 @@ export default function Cart() {
                     style={{ objectFit: "cover", borderRadius: "10px" }}
                   />
 
-                  {/* Info */}
                   <div className="ms-4 flex-grow-1">
                     <h6 className="fw-bold">{item.name}</h6>
                     <p className="text-muted mb-1">₹ {item.price}</p>
 
-                    {/* Quantity Controls */}
                     <div className="d-flex align-items-center mt-2">
                       <button
                         className="btn btn-sm btn-outline-secondary"
@@ -101,9 +133,10 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  {/* Subtotal + Remove */}
                   <div className="text-end">
-                    <h6 className="fw-bold">₹ {item.price * item.quantity}</h6>
+                    <h6 className="fw-bold">
+                      ₹ {item.price * item.quantity}
+                    </h6>
 
                     <button
                       className="btn btn-sm btn-link text-danger"
@@ -117,7 +150,7 @@ export default function Cart() {
             ))}
           </div>
 
-          {/* RIGHT SIDE - ORDER SUMMARY */}
+          {/* RIGHT SIDE */}
           <div className="col-lg-4">
             <div
               className="card shadow-sm border-0"
@@ -143,25 +176,19 @@ export default function Cart() {
                   <strong>₹ {total}</strong>
                 </div>
 
-                {/* <button
-                  className="btn btn-dark w-100"
-                  style={{ borderRadius: "8px" }}
-                  onClick={() => alert("Proceeding to payment...")}
-                >
-                  Proceed to Checkout
-                </button> */}
-                {!address && (
+                {/* ✅ FIXED LOGIC */}
+                {!showAddressForm && (
                   <button
-                    onClick={() => {
-                      setAddress(true);
-                    }}
+                    className="btn btn-dark w-100"
+                    onClick={() => setShowAddressForm(true)}
                   >
-                    proceed to checkout
+                    Proceed to Checkout
                   </button>
                 )}
-                {address && (
+
+                {showAddressForm && (
                   <div style={{ marginTop: "20px" }}>
-                    <h3>Enter Delivery Address</h3>
+                    <h5>Enter Delivery Address</h5>
 
                     <input
                       type="text"
@@ -171,7 +198,6 @@ export default function Cart() {
                         setAddress({ ...address, fullName: e.target.value })
                       }
                     />
-                    <br />
 
                     <input
                       type="text"
@@ -181,7 +207,6 @@ export default function Cart() {
                         setAddress({ ...address, phone: e.target.value })
                       }
                     />
-                    <br />
 
                     <input
                       type="text"
@@ -191,7 +216,6 @@ export default function Cart() {
                         setAddress({ ...address, street: e.target.value })
                       }
                     />
-                    <br />
 
                     <input
                       type="text"
@@ -201,7 +225,6 @@ export default function Cart() {
                         setAddress({ ...address, city: e.target.value })
                       }
                     />
-                    <br />
 
                     <input
                       type="text"
@@ -211,10 +234,9 @@ export default function Cart() {
                         setAddress({ ...address, pincode: e.target.value })
                       }
                     />
-                    <br />
 
                     <button
-                      style={{ marginTop: "10px" }}
+                      className="btn btn-success mt-3 w-100"
                       onClick={handlePlaceOrder}
                     >
                       Place Order

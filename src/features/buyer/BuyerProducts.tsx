@@ -5,56 +5,92 @@ import { toast } from "react-toastify";
 import { addToCart } from "../cart/cartSlice";
 import { useUpdateCartMutation } from "../../services/order";
 
+// ✅ Types
+type Vendor = {
+  _id: string;
+  name: string;
+};
+
+type Product = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  vendor: Vendor;
+};
+
+type UserDetails = {
+  id: string;
+  token: string;
+};
+
+type RootState = {
+  auth: {
+    userDetails: UserDetails;
+  };
+  cart: {
+    cartItems: Product[];
+  };
+};
+
 export default function BuyerProducts() {
   const navigate = useNavigate();
 
-  const {userDetails}=useSelector((state: any)=>state.auth)
-  const {cartItems}=useSelector((state: any)=>state.cart)
+  const { userDetails } = useSelector((state: RootState) => state.auth);
+  const { cartItems } = useSelector((state: RootState) => state.cart);
+
   const dispatch = useDispatch();
-  const { isLoading, data } = useGetProductsQuery("");
- const [updateFn]= useUpdateCartMutation()
 
- 
+  // ❌ REMOVE "" → it expects void
+  const { isLoading, data } = useGetProductsQuery();
 
-  function addToCartFn(product: any) {
-  
-    if(userDetails?.token){
+  const [updateFn] = useUpdateCartMutation();
+
+  function addToCartFn(product: Product) {
+    if (userDetails?.token) {
       dispatch(addToCart(product));
-      updateFn({cartItems,token:userDetails.token,userId:userDetails.id})
-      localStorage.setItem("cartitems",product)
+
+      updateFn({
+        cartItems,
+        token: userDetails.token,
+        userId: userDetails.id,
+      });
+
+      // ❌ FIX: localStorage only accepts string
+      localStorage.setItem("cartitems", JSON.stringify(cartItems));
+
       toast.success("Added to cart");
+    } else {
+      navigate("/login");
+    }
   }
-  else{
-    navigate("/login")
-  }}
 
   return (
     <div className="container mt-4">
-
       <h3 className="mb-4 fw-bold">Explore Products</h3>
 
       {isLoading && <h4>Loading products...</h4>}
 
       {!isLoading && (
         <div className="row g-4">
-          {data?.map((product) => (
+          {data?.map((product: Product) => (
             <div className="col-md-4 col-lg-3" key={product._id}>
               <div
                 className="card h-100 shadow-sm border-0"
                 style={{
                   borderRadius: "14px",
                   transition: "0.3s",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               >
-                {/* Product Image */}
                 <div
                   style={{
                     height: "200px",
                     overflow: "hidden",
                     borderTopLeftRadius: "14px",
                     borderTopRightRadius: "14px",
-                    backgroundColor: "#f8f9fa"
+                    backgroundColor: "#f8f9fa",
                   }}
                 >
                   <img
@@ -65,15 +101,11 @@ export default function BuyerProducts() {
                   />
                 </div>
 
-                {/* Product Info */}
                 <div className="card-body d-flex flex-column">
-
-                  <h6 className="fw-bold mb-2">
-                    {product.name}
-                  </h6>
+                  <h6 className="fw-bold mb-2">{product.name}</h6>
 
                   <p
-                    className="text-muted small flex-grow-1"
+                    className="text-muted small grow"
                     style={{ minHeight: "40px" }}
                   >
                     {product.description}
@@ -88,7 +120,7 @@ export default function BuyerProducts() {
                       className="badge bg-light text-dark"
                       style={{ fontSize: "0.7rem" }}
                     >
-                      {product?.vendor?.name}
+                      {product.vendor?.name}
                     </span>
                   </div>
 
@@ -99,7 +131,6 @@ export default function BuyerProducts() {
                   >
                     Add to Cart
                   </button>
-
                 </div>
               </div>
             </div>

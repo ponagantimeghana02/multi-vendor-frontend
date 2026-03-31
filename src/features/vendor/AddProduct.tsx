@@ -1,40 +1,103 @@
 import { useFormik } from "formik";
 import { useSelector } from "react-redux";
-import { useAddProductMutation, useGetProductByIdQuery, useUpdateProductMutation } from "../../services/vendor";
+import {
+  useAddProductMutation,
+  useGetProductByIdQuery,
+  useUpdateProductMutation,
+} from "../../services/vendor";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 
+// ✅ FORM TYPE (Frontend)
+type ProductFormValues = {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  image: string;
+};
+
+// ✅ API TYPE (Backend response)
+// 👉 Add/remove fields based on your backend
+type ProductApi = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  stock?: number; // optional (in case backend doesn't send it)
+};
+
+type UserDetails = {
+  id: string;
+  token: string;
+};
+
+type RootState = {
+  auth: {
+    userDetails: UserDetails;
+  };
+};
+
 export default function AddProduct() {
   const navigate = useNavigate();
-  const [addProductFn] = useAddProductMutation();
-  const { productId } = useParams();
-  const { isLoading, data } = useGetProductByIdQuery(productId);
-  const [updateFn] = useUpdateProductMutation(productId);
-  const { userDetails } = useSelector((state) => state.auth);
 
-  const productForm = useFormik({
+  // ✅ typed params
+  const { productId } = useParams<{ productId: string }>();
+
+  const [addProductFn] = useAddProductMutation();
+  const [updateFn] = useUpdateProductMutation();
+
+  // ✅ fetch only when editing
+  const { data } = useGetProductByIdQuery(productId!, {
+    skip: !productId,
+  });
+
+  const { userDetails } = useSelector((state: RootState) => state.auth);
+
+  const productForm = useFormik<ProductFormValues>({
     initialValues: {
       name: "",
       description: "",
-      price: "",
-      stock: "",
+      price: 0,
+      stock: 0,
       image: "",
     },
-    onSubmit: (values) => {
-      console.log(values);
-      const Fn = productId ? updateFn : addProductFn;
-      Fn({ product: values, token: userDetails.token, productId: productId })
-        .then((res) => {
-          console.log(res);
-          navigate(`/vendorProducts/${userDetails.id}`);
-        })
-        .catch((err) => console.log("error is", err));
+
+    onSubmit: async (values) => {
+      try {
+        if (productId) {
+          await updateFn({
+            product: values,
+            token: userDetails.token,
+            productId,
+          }).unwrap();
+        } else {
+          await addProductFn({
+            product: values,
+            token: userDetails.token,
+          }).unwrap();
+        }
+
+        navigate(`/vendorProducts/${userDetails.id}`);
+      } catch (err) {
+        console.log("error is", err);
+      }
     },
   });
 
+  // ✅ safely map API → form
   useEffect(() => {
     if (data) {
-      productForm.setValues({ ...data });
+      const product = data as ProductApi;
+
+      productForm.setValues({
+        name: product.name || "",
+        description: product.description || "",
+        price: product.price || 0,
+        stock: product.stock || 0, // ✅ safe
+        image: product.image || "",
+      });
     }
   }, [data]);
 
@@ -44,6 +107,7 @@ export default function AddProduct() {
         <h3 className="text-center mb-4">
           {productId ? "Edit Product" : "Add Product"}
         </h3>
+
         <form onSubmit={productForm.handleSubmit}>
           <div className="mb-3">
             <input
@@ -53,22 +117,25 @@ export default function AddProduct() {
               placeholder="Enter product name"
             />
           </div>
+
           <div className="mb-3">
             <textarea
               className="form-control"
               {...productForm.getFieldProps("description")}
-              placeholder="Enter description of the product"
-              rows="3"
+              placeholder="Enter description"
+              rows={3}
             />
           </div>
+
           <div className="mb-3">
             <input
               type="number"
               className="form-control"
               {...productForm.getFieldProps("price")}
-              placeholder="Enter price of product"
+              placeholder="Enter price"
             />
           </div>
+
           <div className="mb-3">
             <input
               type="number"
@@ -77,6 +144,7 @@ export default function AddProduct() {
               placeholder="Enter stock"
             />
           </div>
+
           <div className="mb-3">
             <input
               type="text"
@@ -85,6 +153,7 @@ export default function AddProduct() {
               placeholder="Enter image URL"
             />
           </div>
+
           <button type="submit" className="btn btn-primary w-100">
             {productId ? "Update Product" : "Add Product"}
           </button>
