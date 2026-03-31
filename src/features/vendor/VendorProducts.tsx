@@ -8,9 +8,9 @@ import {  useSelector } from "react-redux";
 import { useEffect } from "react";
 
 export default function VendorProducts() {
-  const { userDetails } = useSelector((state) => state.auth);
+  const { userDetails } = useSelector((state: any) => state.auth);
   // const {cartItems}=useSelector(state=>state.cart)
-  const { id } = useParams();
+  // const { id } = useParams();
   const navigate = useNavigate();
   // const dispatch=useDispatch()
   const { isLoading, data } = useGetvendorProductsQuery(userDetails?.id);
@@ -19,7 +19,7 @@ export default function VendorProducts() {
   // const [addtoCartFn]=useAddToCartMutation()
   console.log(data);
 
-  async function deleteFn(id) {
+  async function deleteFn(id: any) {
     try {
       await deletemutationFn({ productId: id, token: userDetails.token });
     } catch (err) {
